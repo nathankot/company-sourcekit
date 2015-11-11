@@ -16,6 +16,10 @@
   "Location of sourcekitten executable."
     :type 'file)
 
+(defcustom company-sourcekit-use-yasnippet t
+  "Should Yasnippet be used for completion expansian"
+  :type 'boolean)
+
 (defvar-local company-sourcekit--workspace 'unknown)
 (defun company-sourcekit--workspace ()
   "Retrieve the xcode workspace for the current file by searching up the directory hierarchy."
@@ -66,7 +70,6 @@ PREFIX is the file offset passed to sourcekitten."
         (call-process company-sourcekit-sourcekitten-executable nil (current-buffer) nil
           "complete" "--file" tmpfile "--offset" (number-to-string offset) workspace-or-project)
         (setq return-json (buffer-substring-no-properties (point-min) (point-max)))
-        (message return-json)
         (append (mapcar
                   (lambda (l)
                     (let* ((counter 0)
@@ -97,10 +100,11 @@ IGNORED ignores the rest of the arguments"
                  (company-grab-symbol-cons "\\." 1)))
     (candidates (company-sourcekit--fetch prefix))
     (post-completion
-      (let ((template (get-text-property 0 'yas-template prefix)))
-        (yas-expand-snippet template
-          (- (point) (length prefix))
-          (point))))
+      (when company-sourcekit-use-yasnippet
+        (let ((template (get-text-property 0 'yas-template prefix)))
+          (yas-expand-snippet template
+            (- (point) (length prefix))
+            (point)))))
     (sorted t)))
 
 (provide 'company-sourcekit)
