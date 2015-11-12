@@ -21,8 +21,8 @@
   "Should Yasnippet be used for completion expansion"
   :type 'boolean)
 
-(defcustom company-sourcekit-verbose t
-  "Should company-sourcekit log to the messages buffer"
+(defcustom company-sourcekit-verbose nil
+  "Should log to the messages buffer"
   :type 'boolean)
 
 (defun company-sourcekit--fetch (prefix)
