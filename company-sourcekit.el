@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: t -*-
 ;;; company-sourcekit --- company-mode completion back-end for sourcekit
 
 ;;; Commentary:
