@@ -18,7 +18,7 @@
     :type 'file)
 
 (defcustom company-sourcekit-use-yasnippet t
-  "Should Yasnippet be used for completion expansian"
+  "Should Yasnippet be used for completion expansion"
   :type 'boolean)
 
 (defun company-sourcekit--fetch (prefix)
