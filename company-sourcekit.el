@@ -21,15 +21,19 @@
   "Should Yasnippet be used for completion expansion"
   :type 'boolean)
 
+(defcustom company-sourcekit-verbose t
+  "Should company-sourcekit log to the messages buffer"
+  :type 'boolean)
+
 (defun company-sourcekit--fetch (prefix)
   "Use sourcekitten to get a list of completion candidates.
 PREFIX is the file offset passed to sourcekitten."
-  (message "Retrieving from sourcekitten using PREFIX %s" prefix)
+  (when company-sourcekit-verbose (message "Retrieving from sourcekitten using PREFIX %s" prefix))
   (let ((tmpfile (make-temp-file "sourcekitten"))
         (offset (point)))
     (write-region (point-min) (point-max) tmpfile)
     (with-temp-buffer
-      (message "Calling: sourcekitten complete --file %s --offset %d" tmpfile offset)
+      (when company-sourcekit-verbose (message "Calling: sourcekitten complete --file %s --offset %d" tmpfile offset))
       (call-process company-sourcekit-sourcekitten-executable nil (current-buffer) nil
                     "complete" "--file" tmpfile "--offset" (number-to-string offset))
       (setq return-json (buffer-substring-no-properties (point-min) (point-max)))
