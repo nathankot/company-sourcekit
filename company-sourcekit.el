@@ -16,6 +16,10 @@
   "Location of sourcekitten executable."
     :type 'file)
 
+(defcustom company-sourcekit-use-yasnippet t
+  "Should Yasnippet be used for completion expansian"
+  :type 'boolean)
+
 (defvar-local company-sourcekit--workspace 'unknown)
 (defun company-sourcekit--workspace ()
   "Retrieve the xcode workspace for the current file by searching up the directory hierarchy."
@@ -55,17 +59,35 @@ PREFIX is the file offset passed to sourcekitten."
   (let ((tmpfile (make-temp-file "sourcekitten"))
          (offset (point)))
     (write-region (point-min) (point-max) tmpfile)
+    (setq skworkspace (company-sourcekit--workspace))
+    (setq skproject (company-sourcekit--project))
     (with-temp-buffer
-      (let ((workspace-or-project (if (company-sourcekit--workspace)
-                                    (concat "-workspace " (company-sourcekit--workspace))
-                                    (if (company-sourcekit--project)
-                                      (concat "-project " (company-sourcekit--project)) ""))))
+      (let ((workspace-or-project (if skworkspace
+                                    (concat "-workspace " skworkspace)
+                                    (if skproject
+                                      (concat "-project " skproject) ""))))
         (message "Calling process with --file %s --offset %d %s" tmpfile offset workspace-or-project)
         (call-process company-sourcekit-sourcekitten-executable nil (current-buffer) nil
-          "complete" "--file" tmpfile "--offset" offset workspace-or-project)
-        (append (mapcar (lambda (l) (assoc 'descriptionKey l))
-          (json-read-from-string (buffer-substring-no-properties (point-min) (point-max)))) nil)))))
+          "complete" "--file" tmpfile "--offset" (number-to-string offset) workspace-or-project)
+        (setq return-json (buffer-substring-no-properties (point-min) (point-max)))
+        (append (mapcar
+                  (lambda (l)
+                    (let* ((counter 0)
+                            (v (cdr (assoc 'sourcetext l)))
+                            (n (cdr (assoc 'descriptionKey l)))
+                            (f (replace-regexp-in-string "<#T##\\(.*?\\)#>"
+                                 (lambda (blk)
+                                   (save-match-data
+                                     (string-match "<#T##\\(.*?\\)#>" blk)
+                                     (setq counter (+ 1 counter))
+                                     (format "${%i:%s}" counter (car (split-string (match-string 1 blk) "#")))
+                                     )) v)))
+                      (propertize n 'yas-template f)
+                      )
+                    )
+          (json-read-from-string return-json)) nil)))))
 
+(declare-function yas-expand-snippet "yasnippet")
 (defun company-sourcekit (command &optional prefix &rest ignored)
   "Company backend for swift using sourcekitten, listening to the COMMAND.
 PREFIX is taken as the current point in the buffer
@@ -77,7 +99,14 @@ IGNORED ignores the rest of the arguments"
                  (not (company-in-string-or-comment))
                  (company-grab-symbol-cons "\\." 1)))
     (candidates (company-sourcekit--fetch prefix))
+    (post-completion
+      (when company-sourcekit-use-yasnippet
+        (let ((template (get-text-property 0 'yas-template prefix)))
+          (yas-expand-snippet template
+            (- (point) (length prefix))
+            (point)))))
     (sorted t)))
 
 (provide 'company-sourcekit)
 ;;; company-sourcekit.el ends here
+
