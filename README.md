@@ -3,7 +3,7 @@
 Completion for Swift projects via SourceKit with the help of
 [SourceKitten][sourcekitten].
 
-![Screen capture](https://raw.githubusercontent.com/nathankot/company-sourcekit/master/screen.gif)
+<img src="https://raw.githubusercontent.com/nathankot/company-sourcekit/master/screen.gif" width="384" height="296" />
 
 ### Work in progress
 
