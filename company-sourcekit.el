@@ -122,16 +122,14 @@
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
-  (let ((counter 0))
-    (replace-regexp-in-string
-     "<#T##\\(.*?\\)#>"
-     (lambda (str)
-       ;; <#T##Int#> - No label, argument only
-       (save-match-data
-         (string-match "<#T##\\(.*?\\)#>" str)
-         (setq counter (+ counter 1))
-         (format "${%i:%s}" counter (car (split-string (match-string 1 str) "#")))))
-     sourcetext)))
+  (replace-regexp-in-string
+   "<#T##\\(.*?\\)#>"
+   (lambda (str)
+     ;; <#T##Int#> - No label, argument only
+     (save-match-data
+       (string-match "<#T##\\(.*?\\)#>" str)
+       (format "${%s}" (car (split-string (match-string 1 str) "#")))))
+   sourcetext))
 
 (provide 'company-sourcekit)
 ;;; company-sourcekit.el ends here
