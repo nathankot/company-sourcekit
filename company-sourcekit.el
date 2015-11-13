@@ -35,6 +35,8 @@
     (no-cache t)
     (prefix (company-sourcekit--prefix))
     (candidates (cons :async (lambda (cb) (company-sourcekit--candidates arg cb))))
+    (meta (company-sourcekit--meta arg))
+    (annotation (company-sourcekit--annotation arg))
     (post-completion (company-sourcekit--post-completion arg))))
 
 ;;; Private:
@@ -43,6 +45,14 @@
   (and (eq major-mode 'swift-mode)
        (not (company-in-string-or-comment))
        (company-grab-symbol-cons "\\." 1)))
+
+(defun company-sourcekit--meta (candidate)
+  "Returns the meta for the completion candidate"
+  (get-text-property 0 'description candidate))
+
+(defun company-sourcekit--annotation (candidate)
+  "Returns the type of the completion candidate"
+  (format " :: %s" (get-text-property 0 'type candidate)))
 
 (defun company-sourcekit--candidates (prefix callback)
   "Use sourcekitten to get a list of completion candidates."
@@ -80,9 +90,10 @@
   "Given json returned from sourcekitten, turn it into a list compatible with company-mode"
   (append (mapcar
            (lambda (l)
-             (let ((s (cdr (assoc 'sourcetext l)))
-                   (n (cdr (assoc 'descriptionKey l))))
-               (propertize n 'sourcetext s)))
+             (let ((desc (cdr (assoc 'descriptionKey l)))
+                   (src (cdr (assoc 'sourcetext l)))
+                   (type (cdr (assoc 'typeName l))))
+               (propertize (company-sourcekit--clean-sourcetext src) 'sourcetext src 'description desc 'type type)))
            (json-read-from-string return-json)) nil))
 
 (defun company-sourcekit--handle-error (status)
@@ -96,6 +107,10 @@
     (let ((sourcetext (get-text-property 0 'sourcetext completed))
           (template (company-sourcekit--build-yasnippet sourcetext)))
       (yas-expand-snippet template (- (point) (length completed)) (point)))))
+
+(defun company-sourcekit--clean-sourcetext (sourcetext)
+  "Clean up the source text"
+  (replace-regexp-in-string "<#T.*?#>" "" sourcetext))
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
