@@ -1,7 +1,7 @@
 # company-sourcekit
 
 Completion for Swift projects via SourceKit with the help of
-[SourceKitten][SourceKitten].
+[SourceKitten][sourcekitten].
 
 ### Work in progress
 
@@ -19,7 +19,7 @@ To install, just `git clone https://github.com/nathankot/company-sourcekit` into
 your [load path](http://www.emacswiki.org/emacs/LoadPath) and `(require
 'company-sourcekit)`.
 
-As of _2015-11-13_, [SourceKitten][SourceKitten] needs to be built from master
+As of _2015-11-13_, [SourceKitten][sourcekitten] needs to be built from master
 in order for this to work due to
 [this](https://github.com/jpsim/SourceKitten/issues/97) yet-to-be-released
 patch.
@@ -46,4 +46,4 @@ patch.
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 > THE SOFTWARE.
 
-SourceKitten: https://github.com/jpsim/SourceKitten
+[sourcekitten]: https://github.com/jpsim/SourceKitten
