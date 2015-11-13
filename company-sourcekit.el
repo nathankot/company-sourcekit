@@ -18,7 +18,8 @@
   "Location of sourcekitten executable."
     :type 'file)
 
-(defcustom company-sourcekit-use-yasnippet nil
+(defcustom company-sourcekit-use-yasnippet
+  (fboundp 'yas-minor-mode)
   "Should Yasnippet be used for completion expansion"
   :type 'boolean)
 
