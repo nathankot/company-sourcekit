@@ -56,30 +56,36 @@
 
 (defun company-sourcekit--candidates (prefix callback)
   "Use sourcekitten to get a list of completion candidates."
-  (when company-sourcekit-verbose (message "[company-sourcekit] retrieving from sourcekitten using prefix: %s" prefix))
+  (when company-sourcekit-verbose
+    (message "[company-sourcekit] retrieving from sourcekitten using prefix: %s" prefix))
   (let ((tmpfile (make-temp-file "sourcekitten"))
         (offset (point)))
-    ; Use a temporary file as the source to sourcekitten
+    ;; Use a temporary file as the source to sourcekitten
     (write-region (point-min) (point-max) tmpfile)
-    (let ((buf (get-buffer-create "*sourcekit-output*")))
-      ; Clean up by killing the existing process and erasing the buffer (order is important!)
-      (let ((p (get-process "company-sourcekit")))
-        (if p (progn (when company-sourcekit-verbose (message "[company-sourcekit] killing existing sourcekit process"))
-                     (delete-process p)))
-        (when company-sourcekit-verbose (message "[company-sourcekit] erasing sourcekit output buffer"))
-        (with-current-buffer buf (erase-buffer))
-        (when company-sourcekit-verbose (message "[company-sourcekit] calling `sourcekitten complete --file %s --offset %d`" tmpfile offset))
-                                        ; Run an async process and attach our output handler to it
-        (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
-                                      "complete" "--file" tmpfile "--offset" (number-to-string offset))))
-          (set-process-sentinel process (company-sourcekit--sentinel buf callback)))))))
+    (let ((buf (get-buffer-create "*sourcekit-output*"))
+          (p (get-process "company-sourcekit")))
+      ;; Clean up by killing the existing process and erasing the buffer (order is important!)
+      (if p (progn
+              (when company-sourcekit-verbose
+                (message "[company-sourcekit] killing existing sourcekit process"))
+              (delete-process p)))
+      (when company-sourcekit-verbose
+        (message "[company-sourcekit] erasing sourcekit output buffer"))
+      (with-current-buffer buf (erase-buffer))
+      ;; Run an async process and attach our output handler to it
+      (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
+                                    "complete" "--file" tmpfile "--offset" (number-to-string offset))))
+        (set-process-sentinel process (company-sourcekit--sentinel buf callback))))))
 
 (defun company-sourcekit--sentinel (buf callback)
   "The handler for process output"
   (lambda (proc status)
     (unless (string-match-p "hangup" status)
       (if (eq 0 (process-exit-status proc))
-          (let ((completions (with-current-buffer buf (company-sourcekit--process-json (buffer-substring-no-properties (point-min) (point-max))))))
+          (let ((completions
+                 (with-current-buffer buf
+                   (company-sourcekit--process-json
+                    (buffer-substring-no-properties (point-min) (point-max))))))
             (when company-sourcekit-verbose
               (progn (message "[company-sourcekit] sending completion results:")
                      (prin1 completions)))
@@ -93,7 +99,10 @@
              (let ((desc (cdr (assoc 'descriptionKey l)))
                    (src (cdr (assoc 'sourcetext l)))
                    (type (cdr (assoc 'typeName l))))
-               (propertize (company-sourcekit--clean-sourcetext src) 'sourcetext src 'description desc 'type type)))
+               (propertize (company-sourcekit--clean-sourcetext src)
+                           'sourcetext src
+                           'description desc
+                           'type type)))
            (json-read-from-string return-json)) nil))
 
 (defun company-sourcekit--handle-error (status)
@@ -104,8 +113,7 @@
 (defun company-sourcekit--post-completion (completed)
   "Post completion - expand yasnippet if necessary"
   (when company-sourcekit-use-yasnippet
-    (let ((sourcetext (get-text-property 0 'sourcetext completed))
-          (template (company-sourcekit--build-yasnippet sourcetext)))
+    (let ((template (company-sourcekit--build-yasnippet (get-text-property 0 'sourcetext completed))))
       (yas-expand-snippet template (- (point) (length completed)) (point)))))
 
 (defun company-sourcekit--clean-sourcetext (sourcetext)
