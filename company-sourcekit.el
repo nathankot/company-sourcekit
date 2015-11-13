@@ -52,7 +52,7 @@
 
 (defun company-sourcekit--annotation (candidate)
   "Returns the type of the completion candidate"
-  (format " :: %s" (get-text-property 0 'type candidate)))
+  (format " %s" (get-text-property 0 'type candidate)))
 
 (defun company-sourcekit--candidates (prefix callback)
   "Use sourcekitten to get a list of completion candidates."
