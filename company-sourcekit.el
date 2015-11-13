@@ -96,10 +96,11 @@
   "Given json returned from sourcekitten, turn it into a list compatible with company-mode"
   (append (mapcar
            (lambda (l)
-             (let ((desc (cdr (assoc 'descriptionKey l)))
+             (let ((name (cdr (assoc 'name l)))
+                   (desc (cdr (assoc 'descriptionKey l)))
                    (src (cdr (assoc 'sourcetext l)))
                    (type (cdr (assoc 'typeName l))))
-               (propertize (company-sourcekit--clean-sourcetext src)
+               (propertize name
                            'sourcetext src
                            'description desc
                            'type type)))
@@ -115,10 +116,6 @@
   (when company-sourcekit-use-yasnippet
     (let ((template (company-sourcekit--build-yasnippet (get-text-property 0 'sourcetext completed))))
       (yas-expand-snippet template (- (point) (length completed)) (point)))))
-
-(defun company-sourcekit--clean-sourcetext (sourcetext)
-  "Clean up the source text"
-  (replace-regexp-in-string "<#T.*?#>" "" sourcetext))
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
