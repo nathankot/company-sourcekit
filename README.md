@@ -1,7 +1,7 @@
 # company-sourcekit
 
 Completion for Swift projects via SourceKit with the help of
-[SourceKitten](https://github.com/jpsim/SourceKitten).
+[SourceKitten][SourceKitten].
 
 ### Work in progress
 
@@ -16,7 +16,13 @@ Currently this package works without project-specific completion. I.e it can
 only intelligent about `Foundation` modules and the current file.
 
 To install, just `git clone https://github.com/nathankot/company-sourcekit` into
-your [load path](http://www.emacswiki.org/emacs/LoadPath) and `(require 'company-sourcekit)`.
+your [load path](http://www.emacswiki.org/emacs/LoadPath) and `(require
+'company-sourcekit)`.
+
+As of _2015-11-13_, [SourceKitten][SourceKitten] needs to be built from master
+in order for this to work due to
+[this](https://github.com/jpsim/SourceKitten/issues/97) yet-to-be-released
+patch.
 
 ### License
 
@@ -39,3 +45,5 @@ your [load path](http://www.emacswiki.org/emacs/LoadPath) and `(require 'company
 > LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 > THE SOFTWARE.
+
+SourceKitten: https://github.com/jpsim/SourceKitten
