@@ -32,6 +32,8 @@
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-sourcekit))
+    (init (unless company-sourcekit-sourcekitten-executable
+            (error "[company-sourcekit] sourcekitten not found in PATH")))
     (sorted t)
     (no-cache t)
     (prefix (company-sourcekit--prefix))
