@@ -115,12 +115,23 @@
 (defun company-sourcekit--post-completion (completed)
   "Post completion - expand yasnippet if necessary"
   (when company-sourcekit-use-yasnippet
+    (when company-sourcekit-verbose (message "[company-sourcekit] expanding yasnippet template"))
     (let ((template (company-sourcekit--build-yasnippet (get-text-property 0 'sourcetext completed))))
-      (yas-expand-snippet template (- (point) (length completed)) (point)))))
+      (when company-sourcekit-verbose (message "[company-sourcekit] %s" template)
+      (yas-expand-snippet template (- (point) (length completed)) (point))))))
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
-  (replace-regexp-in-string "<#T.*?#>" "$0" sourcetext))
+  (let ((counter 0))
+    (replace-regexp-in-string
+     "<#T##\\(.*?\\)#>"
+     (lambda (str)
+       ;; <#T##Int#> - No label, argument only
+       (save-match-data
+         (string-match "<#T##\\(.*?\\)#>" str)
+         (setq counter (+ counter 1))
+         (format "${%i:%s}" counter (car (split-string (match-string 1 str) "#")))))
+     sourcetext)))
 
 (provide 'company-sourcekit)
 ;;; company-sourcekit.el ends here
