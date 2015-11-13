@@ -117,8 +117,8 @@
   (when company-sourcekit-use-yasnippet
     (when company-sourcekit-verbose (message "[company-sourcekit] expanding yasnippet template"))
     (let ((template (company-sourcekit--build-yasnippet (get-text-property 0 'sourcetext completed))))
-      (when company-sourcekit-verbose (message "[company-sourcekit] %s" template)
-      (yas-expand-snippet template (- (point) (length completed)) (point))))))
+      (when company-sourcekit-verbose (message "[company-sourcekit] %s" template))
+      (yas-expand-snippet template (- (point) (length completed)) (point)))))
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
