@@ -26,53 +26,80 @@
   "Should log to the messages buffer"
   :type 'boolean)
 
-(defun company-sourcekit--fetch (prefix)
-  "Use sourcekitten to get a list of completion candidates.
-PREFIX is the file offset passed to sourcekitten."
-  (when company-sourcekit-verbose (message "Retrieving from sourcekitten using PREFIX %s" prefix))
-  (let ((tmpfile (make-temp-file "sourcekitten"))
-        (offset (point)))
-    (write-region (point-min) (point-max) tmpfile)
-    (with-temp-buffer
-      (when company-sourcekit-verbose (message "Calling: sourcekitten complete --file %s --offset %d" tmpfile offset))
-      (call-process company-sourcekit-sourcekitten-executable nil (current-buffer) nil
-                    "complete" "--file" tmpfile "--offset" (number-to-string offset))
-      (setq return-json (buffer-substring-no-properties (point-min) (point-max)))
-      (append (mapcar
-               (lambda (l)
-                 (let* ((counter 0)
-                        (v (cdr (assoc 'sourcetext l)))
-                        (n (cdr (assoc 'descriptionKey l)))
-                        (f (replace-regexp-in-string "<#T##\\(.*?\\)#>"
-                                                     (lambda (blk)
-                                                       (save-match-data
-                                                         (string-match "<#T##\\(.*?\\)#>" blk)
-                                                         (setq counter (+ 1 counter))
-                                                         (format "${%i:%s}" counter (car (split-string (match-string 1 blk) "#")))
-                                                         )) v)))
-                   (propertize n 'yas-template f)))
-               (json-read-from-string return-json)) nil))))
-
-(declare-function yas-expand-snippet "yasnippet")
-(defun company-sourcekit (command &optional prefix &rest ignored)
-  "Company backend for swift using sourcekitten, listening to the COMMAND.
-PREFIX is taken as the current point in the buffer
-IGNORED ignores the rest of the arguments"
+(defun company-sourcekit (command &optional arg &rest ignored)
+  "Company backend for swift using sourcekitten"
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-sourcekit))
-    (prefix (and (eq major-mode 'swift-mode)
-                 (not (company-in-string-or-comment))
-                 (company-grab-symbol-cons "\\." 1)))
-    (candidates (company-sourcekit--fetch prefix))
-    (post-completion
-     (when company-sourcekit-use-yasnippet
-       (let ((template (get-text-property 0 'yas-template prefix)))
-         (yas-expand-snippet template
-                             (- (point) (length prefix))
-                             (point)))))
-    (sorted t)))
+    (sorted t)
+    (no-cache t)
+    (prefix (company-sourcekit--prefix))
+    (candidates (cons :async (lambda (cb) (company-sourcekit--candidates arg cb))))
+    (post-completion (company-sourcekit--post-completion arg))))
+
+;;; Private:
+
+(defun company-sourcekit--prefix ()
+  (and (eq major-mode 'swift-mode)
+       (not (company-in-string-or-comment))
+       (company-grab-symbol-cons "\\." 1)))
+
+(defun company-sourcekit--candidates (prefix callback)
+  "Use sourcekitten to get a list of completion candidates."
+  (when company-sourcekit-verbose (message "[company-sourcekit] retrieving from sourcekitten using prefix: %s" prefix))
+  (let ((tmpfile (make-temp-file "sourcekitten"))
+        (offset (point)))
+    ; Use a temporary file as the source to sourcekitten
+    (write-region (point-min) (point-max) tmpfile)
+    (let ((buf (get-buffer-create "*sourcekit-output*")))
+      ; Clean up by killing the existing process and erasing the buffer (order is important!)
+      (let ((p (get-process "company-sourcekit")))
+        (if p (progn (when company-sourcekit-verbose (message "[company-sourcekit] killing existing sourcekit process"))
+                     (delete-process p)))
+        (when company-sourcekit-verbose (message "[company-sourcekit] erasing sourcekit output buffer"))
+        (with-current-buffer buf (erase-buffer))
+        (when company-sourcekit-verbose (message "[company-sourcekit] calling `sourcekitten complete --file %s --offset %d`" tmpfile offset))
+                                        ; Run an async process and attach our output handler to it
+        (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
+                                      "complete" "--file" tmpfile "--offset" (number-to-string offset))))
+          (set-process-sentinel process (company-sourcekit--sentinel buf callback)))))))
+
+(defun company-sourcekit--sentinel (buf callback)
+  "The handler for process output"
+  (lambda (proc status)
+    (unless (string-match-p "hangup" status)
+      (if (eq 0 (process-exit-status proc))
+          (let ((completions (with-current-buffer buf (company-sourcekit--process-json (buffer-substring-no-properties (point-min) (point-max))))))
+            (when company-sourcekit-verbose
+              (progn (message "[company-sourcekit] sending completion results:")
+                     (prin1 completions)))
+            (funcall callback completions))
+        (company-sourcekit--handle-error status)))))
+
+(defun company-sourcekit--process-json (return-json)
+  "Given json returned from sourcekitten, turn it into a list compatible with company-mode"
+  (append (mapcar
+           (lambda (l)
+             (let ((s (cdr (assoc 'sourcetext l)))
+                   (n (cdr (assoc 'descriptionKey l))))
+               (propertize n 'sourcetext s)))
+           (json-read-from-string return-json)) nil))
+
+(defun company-sourcekit--handle-error (status)
+  (when company-sourcekit-verbose
+    (message "[company-sourcekit] sourcekitten failed with status: %s" status)))
+
+(declare-function yas-expand-snippet "yasnippet")
+(defun company-sourcekit--post-completion (completed)
+  "Post completion - expand yasnippet if necessary"
+  (when company-sourcekit-use-yasnippet
+    (let ((sourcetext (get-text-property 0 'sourcetext completed))
+          (template (company-sourcekit--build-yasnippet sourcetext)))
+      (yas-expand-snippet template (- (point) (length completed)) (point)))))
+
+(defun company-sourcekit--build-yasnippet (sourcetext)
+  "Build a yasnippet-compatible snippet from the given source text"
+  (replace-regexp-in-string "<#T.*?#>" "$0" sourcetext))
 
 (provide 'company-sourcekit)
 ;;; company-sourcekit.el ends here
-
