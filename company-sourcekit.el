@@ -1,4 +1,5 @@
 ;;; -*- lexical-binding: t -*-
+
 ;;; company-sourcekit --- company-mode completion back-end for sourcekit
 
 ;;; Commentary:
@@ -66,7 +67,7 @@
     ;; Use a temporary file as the source to sourcekitten
     (write-region (point-min) (point-max) tmpfile)
     (let ((buf (get-buffer-create "*sourcekit-output*"))
-          (p (get-process "company-sourcekit")))
+           (p (get-process "company-sourcekit")))
       ;; Clean up by killing the existing process and erasing the buffer (order is important!)
       (if p (progn
               (when company-sourcekit-verbose
@@ -79,7 +80,7 @@
         (buffer-disable-undo))
       ;; Run an async process and attach our output handler to it
       (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
-                                    "complete" "--file" tmpfile "--offset" (number-to-string offset))))
+                       "complete" "--file" tmpfile "--offset" (number-to-string offset))))
         (set-process-sentinel process (company-sourcekit--sentinel buf callback))))))
 
 (defun company-sourcekit--sentinel (buf callback)
