@@ -71,14 +71,16 @@ It never actually gets sent to the completion engine."
           (offsetoffset
             (or
               ;; Properties or methods
+              ;; Sourcekitten works well when the offset is a dot (.)
+              ;; So lets give it the position of the last dot based on the prefix
               (and (eq ?. (char-before (- (point) (length prefix)))) (length prefix))
               ;; Import statements
               (and (eq (string-match "import \\w*" (thing-at-point 'line)) 0) (length prefix))
+              ;; Words
               0))
           (tmpfile (make-temp-file "sourcekitten"))
-          ;; Sourcekitten works will when the offset is a dot (.)
-          ;; So lets give it the position of the last dot based on the prefix
-          ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1
+          ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1,
+          ;; therefore subtract `point-min`
           (offset (- (point) offsetoffset (point-min))))
     ;; Use a temporary file as the source to sourcekitten
     (write-region (point-min) (point-max) tmpfile)
