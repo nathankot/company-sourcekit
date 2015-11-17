@@ -36,7 +36,6 @@
     (init (unless company-sourcekit-sourcekitten-executable
             (error "[company-sourcekit] sourcekitten not found in PATH")))
     (sorted t)
-    (no-cache t)
     (prefix (company-sourcekit--prefix))
     (candidates (cons :async (lambda (cb) (company-sourcekit--candidates arg cb))))
     (meta (company-sourcekit--meta arg))
@@ -46,9 +45,15 @@
 ;;; Private:
 
 (defun company-sourcekit--prefix ()
-  (and (eq major-mode 'swift-mode)
-       (not (company-in-string-or-comment))
-       (company-grab-symbol-cons "\\." 1)))
+  "In our case, the prefix acts as a cache key for company-mode.
+It never actually gets sent to the completion engine."
+  (and
+    (or (eq major-mode 'swift-mode)
+        (eq major-mode 'objc-mode))
+    (not (company-in-string-or-comment))
+    (or
+      (company-grab-symbol-cons "\\.")
+      (company-grab-word))))
 
 (defun company-sourcekit--meta (candidate)
   "Gets the meta for the completion candidate."
@@ -60,10 +65,21 @@
 
 (defun company-sourcekit--candidates (prefix callback)
   "Use sourcekitten to get a list of completion candidates."
-  (when company-sourcekit-verbose
-    (message "[company-sourcekit] retrieving from sourcekitten using prefix: %s" prefix))
-  (let ((tmpfile (make-temp-file "sourcekitten"))
-        (offset (point)))
+  (let* ( ;; What sort of completion are we doing?
+          ;; SourceKit is strict about the offsets that we give it so our
+          ;; final offset will depend on this.
+          (offsetoffset
+            (or
+              ;; Properties or methods
+              (and (eq ?. (char-before (- (point) (length prefix)))) (length prefix))
+              ;; Import statements
+              (and (eq (string-match "import \\w*" (thing-at-point 'line)) 0) (length prefix))
+              0))
+          (tmpfile (make-temp-file "sourcekitten"))
+          ;; Sourcekitten works will when the offset is a dot (.)
+          ;; So lets give it the position of the last dot based on the prefix
+          ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1
+          (offset (- (point) offsetoffset (point-min))))
     ;; Use a temporary file as the source to sourcekitten
     (write-region (point-min) (point-max) tmpfile)
     (let ((buf (get-buffer-create "*sourcekit-output*"))
@@ -78,6 +94,8 @@
       (with-current-buffer buf
         (erase-buffer)
         (buffer-disable-undo))
+      (when company-sourcekit-verbose
+        (message "[company-sourcekit] prefix: %s, file: %s, offset: %d" prefix tmpfile offset))
       ;; Run an async process and attach our output handler to it
       (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
                        "complete" "--file" tmpfile "--offset" (number-to-string offset))))
