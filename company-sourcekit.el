@@ -48,8 +48,7 @@
   "In our case, the prefix acts as a cache key for company-mode.
 It never actually gets sent to the completion engine."
   (and
-    (or (eq major-mode 'swift-mode)
-        (eq major-mode 'objc-mode))
+    (eq major-mode 'swift-mode)
     (not (company-in-string-or-comment))
     (or
       (company-grab-symbol-cons "\\.")
