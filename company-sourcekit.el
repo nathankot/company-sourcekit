@@ -74,7 +74,9 @@
               (delete-process p)))
       (when company-sourcekit-verbose
         (message "[company-sourcekit] erasing sourcekit output buffer"))
-      (with-current-buffer buf (erase-buffer))
+      (with-current-buffer buf
+        (erase-buffer)
+        (buffer-disable-undo))
       ;; Run an async process and attach our output handler to it
       (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
                                     "complete" "--file" tmpfile "--offset" (number-to-string offset))))
