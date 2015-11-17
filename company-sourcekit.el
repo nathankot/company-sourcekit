@@ -20,15 +20,15 @@
 
 (defcustom company-sourcekit-use-yasnippet
   (fboundp 'yas-minor-mode)
-  "Should Yasnippet be used for completion expansion"
+  "Should Yasnippet be used for completion expansion."
   :type 'boolean)
 
 (defcustom company-sourcekit-verbose nil
-  "Should log to the messages buffer"
+  "Should log to the messages buffer."
   :type 'boolean)
 
 (defun company-sourcekit (command &optional arg &rest ignored)
-  "Company backend for swift using sourcekitten"
+  "Company backend for swift using sourcekitten."
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-sourcekit))
@@ -50,11 +50,11 @@
        (company-grab-symbol-cons "\\." 1)))
 
 (defun company-sourcekit--meta (candidate)
-  "Returns the meta for the completion candidate"
+  "Gets the meta for the completion candidate."
   (get-text-property 0 'description candidate))
 
 (defun company-sourcekit--annotation (candidate)
-  "Returns the type of the completion candidate"
+  "Gets the type of the completion candidate."
   (format " %s" (get-text-property 0 'type candidate)))
 
 (defun company-sourcekit--candidates (prefix callback)
@@ -81,7 +81,7 @@
         (set-process-sentinel process (company-sourcekit--sentinel buf callback))))))
 
 (defun company-sourcekit--sentinel (buf callback)
-  "The handler for process output"
+  "The handler for process output."
   (lambda (proc status)
     (unless (string-match-p "hangup" status)
       (if (eq 0 (process-exit-status proc))
