@@ -1,12 +1,14 @@
 ;;; -*- lexical-binding: t -*-
-
 ;;; company-sourcekit --- company-mode completion back-end for sourcekit
+;;; Package-Requires: ((dash "2.12.1") (dash-functional "1.2.0")
 
 ;;; Commentary:
 
 (require 'company)
 (require 'cl-lib)
 (require 'json)
+(require 'dash)
+(require 'dash-functional)
 
 ;;; Code:
 
@@ -14,27 +16,46 @@
   "Completion backend that uses sourcekit"
   :group 'company)
 
-(defcustom company-sourcekit-sourcekitten-executable
-  (executable-find "sourcekitten")
-  "Location of sourcekitten executable."
-    :type 'file)
+(defcustom company-sourcekit-sourcekittendaemon-executable
+  (executable-find "sourcekittendaemon")
+  "Location of sourcekittendaemon."
+  :type 'file)
+
+(defcustom company-sourcekit-curl-executable
+  (executable-find "curl")
+  "Location of curl."
+  :type 'file)
+
+(defcustom company-sourcekit-port
+  4766
+  "The first port number that will be used for sourcekittendaemon.
+Any additional daemons will use ports starting from this number in increments of 1"
+  :type 'integer)
+
+(defcustom company-sourcekit-default-configuration
+  nil
+  "The default configuration to build."
+  :type 'string)
 
 (defcustom company-sourcekit-use-yasnippet
   (fboundp 'yas-minor-mode)
   "Should Yasnippet be used for completion expansion."
   :type 'boolean)
 
-(defcustom company-sourcekit-verbose nil
+(defcustom company-sourcekit-verbose t
   "Should log to the messages buffer."
   :type 'boolean)
 
 (defun company-sourcekit (command &optional arg &rest ignored)
-  "Company backend for swift using sourcekitten."
+  "Company backend for swift using sourcekitten.
+COMMAND is the command to run for this backend
+ARG are the arguments passed to the command
+IGNORED are ignored"
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-sourcekit))
-    (init (unless company-sourcekit-sourcekitten-executable
-            (error "[company-sourcekit] sourcekitten not found in PATH")))
+    (init (unless company-sourcekit-sourcekittendaemon-executable
+            (error "[company-sourcekit] sourcekittendaemon not found in PATH")))
     (sorted t)
     (prefix (company-sourcekit--prefix))
     (candidates (cons :async (lambda (cb) (company-sourcekit--candidates arg cb))))
@@ -43,6 +64,68 @@
     (post-completion (company-sourcekit--post-completion arg))))
 
 ;;; Private:
+
+(defvar-local company-sourcekit--project 'unknown)
+(defun company-sourcekit--project ()
+  (when (eq company-sourcekit--project 'unknown)
+    (setq company-sourcekit--project
+      (let ((dir (if buffer-file-name
+                   (file-name-directory buffer-file-name)
+                   (expand-file-name default-directory)))
+             (prev-dir nil)
+             file)
+        (while (not (or file (equal dir prev-dir)))
+          (setq file (car (directory-files dir t ".xcodeproj\\'" t))
+            prev-dir dir
+            dir (file-name-directory (directory-file-name dir))))
+        file)))
+  company-sourcekit--project)
+
+(defvar company-sourcekit--daemon nil)
+(defun company-sourcekit--daemon-for (project)
+  "Get or create a daemon for the given project.
+Company-sourcekit only keeps one daemon instance running at any given time.
+So if a daemon already exists for another process, it is killed and overwritten."
+  (if (and company-sourcekit--daemon (eq project (cdr (assoc 'project company-sourcekit--daemon))))
+    company-sourcekit--daemon
+    ;; Otherwise stop the currenct process and start a new one
+    (-when-let ((d company-sourcekit--daemon)) (company-sourcekit--stop-daemon-process company-sourcekit--daemon))
+    (let* (
+            (port company-sourcekit-port)
+            (daemon (list
+                      (cons 'port port)
+                      (cons 'project project)
+                      (cons 'configuration company-sourcekit-default-configuration)
+                      (cons 'target nil)
+                      (cons 'process-name (concat "company-sourcekit-daemon:" project)))))
+      (setq company-sourcekit--daemon daemon)
+      daemon)))
+
+(defun company-sourcekit--start-or-restart-daemon-process (daemon)
+  "Start/restart the process for the given daemon object."
+  (company-sourcekit--stop-daemon-process daemon)
+  (company-sourcekit--start-daemon-process daemon))
+
+(defun company-sourcekit--start-daemon-process (daemon)
+  "Start the process of a daemon"
+  (when company-sourcekit-verbose
+      (message "[company-sourcekit] Starting daemon for: %s" (cdr (assoc 'project daemon))))
+  (eval `(start-process
+           ,(cdr (assoc 'process-name daemon))
+           (when company-sourcekit-verbose "*sourcekit-daemon-process*")
+           ,company-sourcekit-sourcekittendaemon-executable
+           "start"
+           "--port" ,(number-to-string (cdr (assoc 'port daemon)))
+           "--project" ,(cdr (assoc 'project daemon))
+           ,@(-when-let ((t (cdr (assoc 'target daemon)))) `("--target" ,t))
+           ,@(-when-let ((c (cdr (assoc 'configuration daemon)))) `("--configuration" ,c)))))
+
+(defun company-sourcekit--stop-daemon-process (daemon)
+  "Stop the process of a daemon if it exists."
+  (-when-let ((p (get-process (cdr (assoc ('process-name daemon))))))
+    (when company-sourcekit-verbose
+      (message "[company-sourcekit] Stopping daemon for: %s" (cdr (assoc 'project daemon))))
+    (delete-process p)))
 
 (defun company-sourcekit--prefix ()
   "In our case, the prefix acts as a cache key for company-mode.
@@ -64,7 +147,9 @@ It never actually gets sent to the completion engine."
 
 (defun company-sourcekit--candidates (prefix callback)
   "Use sourcekitten to get a list of completion candidates."
-  (let* ( ;; What sort of completion are we doing?
+  (let* (
+          (tmpfile (make-temp-file "sourcekitten"))
+          ;; What sort of completion are we doing?
           ;; SourceKit is strict about the offsets that we give it so our
           ;; final offset will depend on this.
           (offsetoffset
@@ -77,30 +162,26 @@ It never actually gets sent to the completion engine."
               (and (eq (string-match "import \\w*" (thing-at-point 'line)) 0) (length prefix))
               ;; Words
               0))
-          (tmpfile (make-temp-file "sourcekitten"))
           ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1,
           ;; therefore subtract `point-min`
-          (offset (- (point) offsetoffset (point-min))))
-    ;; Use a temporary file as the source to sourcekitten
+          (offset (- (point) offsetoffset (point-min)))
+          (buf (get-buffer-create "*sourcekit-output*"))
+          (daemon (company-sourcekit--daemon-for (company-sourcekit--project))))
+
+    (company-sourcekit--start-or-restart-daemon-process daemon)
     (write-region (point-min) (point-max) tmpfile)
-    (let ((buf (get-buffer-create "*sourcekit-output*"))
-           (p (get-process "company-sourcekit")))
-      ;; Clean up by killing the existing process and erasing the buffer (order is important!)
-      (if p (progn
-              (when company-sourcekit-verbose
-                (message "[company-sourcekit] killing existing sourcekit process"))
-              (delete-process p)))
-      (when company-sourcekit-verbose
-        (message "[company-sourcekit] erasing sourcekit output buffer"))
-      (with-current-buffer buf
-        (erase-buffer)
-        (buffer-disable-undo))
-      (when company-sourcekit-verbose
-        (message "[company-sourcekit] prefix: %s, file: %s, offset: %d" prefix tmpfile offset))
-      ;; Run an async process and attach our output handler to it
-      (let ((process (start-process "company-sourcekit" buf company-sourcekit-sourcekitten-executable
-                       "complete" "--file" tmpfile "--offset" (number-to-string offset))))
-        (set-process-sentinel process (company-sourcekit--sentinel buf callback))))))
+    (with-current-buffer buf (erase-buffer) (buffer-disable-undo))
+
+    (when company-sourcekit-verbose
+      (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
+    ;; Make HTTP request to the sourcekittendaemon, asynchronously
+    (let* ((process (start-process
+                      "company-sourcekit-query" buf company-sourcekit-curl-executable
+                      "-f" ;; Exit code != 0 on error status responses
+                      "-H" (format "X-Offset: %d" offset)
+                      "-H" (format "X-Path: %s" tmpfile)
+                      (format "http://localhost:%d/complete" (cdr (assoc 'port daemon))))))
+      (set-process-sentinel process (company-sourcekit--sentinel buf callback)))))
 
 (defun company-sourcekit--sentinel (buf callback)
   "The handler for process output."
@@ -133,7 +214,7 @@ It never actually gets sent to the completion engine."
 
 (defun company-sourcekit--handle-error (status)
   (when company-sourcekit-verbose
-    (message "[company-sourcekit] sourcekitten failed with status: %s" status)))
+    (message "[company-sourcekit] failed with status: %s" status)))
 
 (declare-function yas-expand-snippet "yasnippet")
 (defun company-sourcekit--post-completion (completed)
@@ -142,7 +223,7 @@ It never actually gets sent to the completion engine."
     (when company-sourcekit-verbose (message "[company-sourcekit] expanding yasnippet template"))
     (let ((template (company-sourcekit--build-yasnippet (get-text-property 0 'sourcetext completed))))
       (when company-sourcekit-verbose (message "[company-sourcekit] %s" template))
-      (yas-expand-snippet template (- (point) (length completed)) (point)))))
+      (yas-expand-snippet template (- (point) (length completed) 1) (point)))))
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
