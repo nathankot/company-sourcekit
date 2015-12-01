@@ -149,22 +149,9 @@ It never actually gets sent to the completion engine."
   "Use sourcekitten to get a list of completion candidates."
   (let* (
           (tmpfile (make-temp-file "sourcekitten"))
-          ;; What sort of completion are we doing?
-          ;; SourceKit is strict about the offsets that we give it so our
-          ;; final offset will depend on this.
-          (offsetoffset
-            (or
-              ;; Properties or methods
-              ;; Sourcekitten works well when the offset is a dot (.)
-              ;; So lets give it the position of the last dot based on the prefix
-              (and (eq ?. (char-before (- (point) (length prefix)))) (length prefix))
-              ;; Import statements
-              (and (eq (string-match "import \\w*" (thing-at-point 'line)) 0) (length prefix))
-              ;; Words
-              0))
           ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1,
           ;; therefore subtract `point-min`
-          (offset (- (point) offsetoffset (point-min)))
+          (offset (- (point) (length prefix) (point-min)))
           (buf (get-buffer-create "*sourcekit-output*"))
           (daemon (company-sourcekit--daemon-for (company-sourcekit--project))))
 
