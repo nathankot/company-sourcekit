@@ -85,7 +85,7 @@ IGNORED are ignored"
 (defun company-sourcekit--daemon-for (project)
   "Get or create a daemon for the given project.
 Company-sourcekit only keeps one daemon instance running at any given time.
-So if a daemon already exists for another process, it is killed and overwritten."
+So if a daemon already exists for another project, it will be killed and overwritten."
   (if (and company-sourcekit--daemon (eq project (cdr (assoc 'project company-sourcekit--daemon))))
     company-sourcekit--daemon
     ;; Otherwise stop the currenct process and start a new one
