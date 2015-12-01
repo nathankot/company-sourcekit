@@ -117,8 +117,8 @@ So if a daemon already exists for another project, it will be killed and overwri
            "start"
            "--port" ,(number-to-string (cdr (assoc 'port daemon)))
            "--project" ,(cdr (assoc 'project daemon))
-           ,@(-when-let ((t (cdr (assoc 'target daemon)))) `("--target" ,t))
-           ,@(-when-let ((c (cdr (assoc 'configuration daemon)))) `("--configuration" ,c)))))
+           ,@(-when-let ((x (cdr (assoc 'target daemon)))) `("--target" ,x))
+           ,@(-when-let ((x (cdr (assoc 'configuration daemon)))) `("--configuration" ,x)))))
 
 (defun company-sourcekit--stop-daemon-process (daemon)
   "Stop the process of a daemon if it exists."
