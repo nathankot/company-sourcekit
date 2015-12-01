@@ -42,7 +42,7 @@ Any additional daemons will use ports starting from this number in increments of
   "Should Yasnippet be used for completion expansion."
   :type 'boolean)
 
-(defcustom company-sourcekit-verbose t
+(defcustom company-sourcekit-verbose nil
   "Should log to the messages buffer."
   :type 'boolean)
 
