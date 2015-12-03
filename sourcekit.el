@@ -98,7 +98,7 @@ CB is called with the port as the first argument, nil if the daemon cannot be cr
           (set-process-sentinel process
             (lambda (proc status)
               ;; On any startup failures, delete the lock
-              (unless (eq "run" status)
+              (unless (string-match "run" status)
                 (message "[sourcekit] daemon startup failure: %s" status)
                 (setq sourcekit-start-daemon-lock nil)
                 (setq sourcekit-last-daemon-port nil)
