@@ -65,7 +65,8 @@ CB is called with the port as the first argument, nil if the daemon cannot be cr
   (let ((port (or
                 sourcekit-last-daemon-port
                 (-first
-                  (lambda (p) (eq project (sourcekit-lax-query-sync p "/project")))
+                  (lambda (p)
+                    (string-equal project (sourcekit-lax-query-sync p "/project")))
                   sourcekit-available-ports))))
 
     (if port
@@ -134,6 +135,7 @@ This differs from sourcekit-query in that it does not consider error responses a
           (buf (sourcekit-output-buffer))
           (exit-code
             (eval `(call-process ,sourcekit-curl-executable nil ,buf nil
+                     "--silent"
                      ,@args
                      ,(format "http://localhost:%d%s" port path)))))
     (when (eq 0 exit-code)
@@ -150,7 +152,8 @@ If a query ever fails, it will reset the cached daemon port."
           (process
             (eval `(start-process
                      "sourcekit-query" ,buf ,sourcekit-curl-executable
-                     "-f" ;; Exit code != 0 on error status responses
+                     "--silent"
+                     "--fail" ;; Exit code != 0 on error status responses
                      ,@args
                      ,(format "http://localhost:%d%s" port path)))))
     (set-process-sentinel process
