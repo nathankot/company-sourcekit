@@ -146,6 +146,7 @@ This differs from sourcekit-query in that it does not consider error responses a
   "Run a query against the sourcekit daemon on PORT and PATH, passing ARGS as additional arguments to curl.
 CB is the process sentinel for the query, with an additional third argument as the process stdout string.
 If a query ever fails, it will reset the cached daemon port."
+  (-when-let (p (get-process "sourcekit-query")) (delete-process p))
   (let* (
           (buf (sourcekit-output-buffer))
           ;; Make HTTP request to the sourcekittendaemon, asynchronously
@@ -168,8 +169,7 @@ If a query ever fails, it will reset the cached daemon port."
           ;; Otherwise pass output to the given handler
           (let ((stdout (with-current-buffer buf
                           (buffer-substring-no-properties (point-min) (point-max)))))
-            (funcall cb proc status stdout)))
-        (delete-process proc)))))
+            (funcall cb proc status stdout)))))))
 
 (defun sourcekit-output-buffer ()
   "Returns the designated output buffer used by sourcekit daemon requests.
