@@ -156,6 +156,7 @@ If a query ever fails, it will reset the cached daemon port."
                      "--fail" ;; Exit code != 0 on error status responses
                      ,@args
                      ,(format "http://localhost:%d%s" port path)))))
+
     (set-process-sentinel process
       (lambda (proc status)
         (when sourcekit-verbose (message "[sourcekit] query got status: %s" status))
@@ -167,7 +168,8 @@ If a query ever fails, it will reset the cached daemon port."
           ;; Otherwise pass output to the given handler
           (let ((stdout (with-current-buffer buf
                           (buffer-substring-no-properties (point-min) (point-max)))))
-            (funcall cb proc status stdout)))))))
+            (funcall cb proc status stdout)))
+        (delete-process proc)))))
 
 (defun sourcekit-output-buffer ()
   "Returns the designated output buffer used by sourcekit daemon requests.
