@@ -9,6 +9,7 @@
 (require 'json)
 (require 'dash)
 (require 'dash-functional)
+(require 'sourcekit)
 
 ;;; Code:
 
@@ -16,48 +17,26 @@
   "Completion backend that uses sourcekit"
   :group 'company)
 
-(defcustom company-sourcekit-sourcekittendaemon-executable
-  (executable-find "sourcekittendaemon")
-  "Location of sourcekittendaemon."
-  :type 'file)
-
-(defcustom company-sourcekit-curl-executable
-  (executable-find "curl")
-  "Location of curl."
-  :type 'file)
-
-(defcustom company-sourcekit-port
-  4766
-  "The first port number that will be used for sourcekittendaemon.
-Any additional daemons will use ports starting from this number in increments of 1"
-  :type 'integer)
-
-(defcustom company-sourcekit-default-configuration
-  nil
-  "The default configuration to build."
-  :type 'string)
-
 (defcustom company-sourcekit-use-yasnippet
   (fboundp 'yas-minor-mode)
   "Should Yasnippet be used for completion expansion."
-  :type 'boolean)
+  :type 'boolean
+  :group 'company-sourcekit)
 
-(defcustom company-sourcekit-verbose t
+(defcustom company-sourcekit-verbose nil
   "Should log with verbosity to the messages buffer."
-  :type 'boolean)
+  :type 'boolean
+  :group 'company-sourcekit)
 
 (defun company-sourcekit (command &optional arg &rest ignored)
-  "Company backend for swift using sourcekitten.
-COMMAND is the command to run for this backend
-ARG are the arguments passed to the command
-IGNORED are ignored"
+  "Company backend for swift using sourcekitten."
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-sourcekit))
     (init (progn
-            (unless company-sourcekit-sourcekittendaemon-executable
+            (unless sourcekit-sourcekittendaemon-executable
               (error "[company-sourcekit] sourcekittendaemon not found in PATH"))
-            (if (eq (company-sourcekit--project) 'unknown)
+            (if (eq (sourcekit-project) 'unknown)
               (error "[company-sourcekit] *.xcodeproj not found in directory tree"))))
     (sorted t)
     (prefix (company-sourcekit--prefix))
@@ -67,70 +46,6 @@ IGNORED are ignored"
     (post-completion (company-sourcekit--post-completion arg))))
 
 ;;; Private:
-
-(defvar-local company-sourcekit--project 'unknown)
-(defun company-sourcekit--project ()
-  (when (eq company-sourcekit--project 'unknown)
-    (setq company-sourcekit--project
-      (let ((dir (if buffer-file-name
-                   (file-name-directory buffer-file-name)
-                   (expand-file-name default-directory)))
-             (prev-dir nil)
-             file)
-        (while (not (or file (equal dir prev-dir)))
-          (setq file (car (directory-files dir t ".xcodeproj\\'" t))
-            prev-dir dir
-            dir (file-name-directory (directory-file-name dir))))
-        file)))
-  company-sourcekit--project)
-
-(defvar company-sourcekit--daemon nil)
-(defun company-sourcekit--daemon-for (project)
-  "Get or create a daemon for the given project.
-Company-sourcekit only keeps one daemon instance running at any given time.
-So if a daemon already exists for another project, it will be killed and overwritten."
-  (if (and
-        (boundp 'company-sourcekit--daemon)
-        (eq project (cdr (assoc 'project company-sourcekit--daemon))))
-    company-sourcekit--daemon
-    ;; Otherwise stop the currenct process and start a new one
-    (-when-let ((d company-sourcekit--daemon)) (company-sourcekit--stop-daemon-process company-sourcekit--daemon))
-    (let* (
-            (port company-sourcekit-port)
-            (daemon (list
-                      (cons 'port port)
-                      (cons 'project project)
-                      (cons 'configuration company-sourcekit-default-configuration)
-                      (cons 'target nil)
-                      (cons 'process-name (concat "company-sourcekit-daemon:" project)))))
-      (setq company-sourcekit--daemon daemon)
-      daemon)))
-
-(defun company-sourcekit--start-or-restart-daemon-process (daemon)
-  "Start/restart the process for the given daemon object."
-  (company-sourcekit--stop-daemon-process daemon)
-  (company-sourcekit--start-daemon-process daemon))
-
-(defun company-sourcekit--start-daemon-process (daemon)
-  "Start the process of a daemon"
-  (when company-sourcekit-verbose
-      (message "[company-sourcekit] Starting daemon for: %s" (cdr (assoc 'project daemon))))
-  (eval `(start-process
-           ,(cdr (assoc 'process-name daemon))
-           (when company-sourcekit-verbose "*sourcekit-daemon-process*")
-           ,company-sourcekit-sourcekittendaemon-executable
-           "start"
-           "--port" ,(number-to-string (cdr (assoc 'port daemon)))
-           ,@(-when-let ((x (cdr (assoc 'project daemon)))) `("--project" ,x))
-           ,@(-when-let ((x (cdr (assoc 'target daemon)))) `("--target" ,x))
-           ,@(-when-let ((x (cdr (assoc 'configuration daemon)))) `("--configuration" ,x)))))
-
-(defun company-sourcekit--stop-daemon-process (daemon)
-  "Stop the process of a daemon if it exists."
-  (-when-let ((p (get-process (cdr (assoc ('process-name daemon))))))
-    (when company-sourcekit-verbose
-      (message "[company-sourcekit] Stopping daemon for: %s" (cdr (assoc 'project daemon))))
-    (delete-process p)))
 
 (defun company-sourcekit--prefix ()
   "In our case, the prefix acts as a cache key for company-mode.
@@ -152,42 +67,35 @@ It never actually gets sent to the completion engine."
 
 (defun company-sourcekit--candidates (prefix callback)
   "Use sourcekitten to get a list of completion candidates."
-  (let* (
-          (tmpfile (make-temp-file "sourcekitten"))
-          ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1,
-          ;; therefore subtract `point-min`
-          (offset (- (point) (length prefix) (point-min)))
-          (buf (get-buffer-create "*sourcekit-output*"))
-          (daemon (company-sourcekit--daemon-for (company-sourcekit--project))))
+  (sourcekit-with-daemon-for-project (sourcekit-project)
+    (lambda (port)
+      (if (not port) (callback nil)
+        (let* (
+                (tmpfile (make-temp-file "sourcekitten"))
+                ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1,
+                ;; therefore subtract `point-min`
+                (offset (- (point) (length prefix) (point-min))))
+          (write-region (point-min) (point-max) tmpfile)
+          (when company-sourcekit-verbose
+            (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
+          ;; Make HTTP request to the sourcekittendaemon, asynchronously
+          (sourcekit-query port
+            "/complete"
+            (company-sourcekit--make-sentinel callback)
+            "-H" (format "X-Offset: %d" offset)
+            "-H" (format "X-Path: %s" tmpfile)))))))
 
-    (company-sourcekit--start-or-restart-daemon-process daemon)
-    (write-region (point-min) (point-max) tmpfile)
-    (with-current-buffer buf (erase-buffer) (buffer-disable-undo))
-
-    (when company-sourcekit-verbose
-      (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
-    ;; Make HTTP request to the sourcekittendaemon, asynchronously
-    (let* ((process (start-process
-                      "company-sourcekit-query" buf company-sourcekit-curl-executable
-                      "-f" ;; Exit code != 0 on error status responses
-                      "-H" (format "X-Offset: %d" offset)
-                      "-H" (format "X-Path: %s" tmpfile)
-                      (format "http://localhost:%d/complete" (cdr (assoc 'port daemon))))))
-      (set-process-sentinel process (company-sourcekit--sentinel buf callback)))))
-
-(defun company-sourcekit--sentinel (buf callback)
+(defun company-sourcekit--make-sentinel (callback)
   "The handler for process output."
-  (lambda (proc status)
-    (unless (string-match-p "hangup" status)
+  (lambda (proc status output)
+    (when company-sourcekit-verbose
+      (message "[company-sourcekit] query got status: %s" status))
+    (when (or (string-match "exit" status) (string-match "finished" status))
       (if (eq 0 (process-exit-status proc))
-          (let ((completions
-                 (with-current-buffer buf
-                   (company-sourcekit--process-json
-                    (buffer-substring-no-properties (point-min) (point-max))))))
-            (when company-sourcekit-verbose
-              (progn (message "[company-sourcekit] sending completion results:")
-                     (prin1 completions)))
-            (funcall callback completions))
+        (let ((completions (company-sourcekit--process-json output)))
+          (when company-sourcekit-verbose
+            (message "[company-sourcekit] sending results to company"))
+          (funcall callback completions))
         (company-sourcekit--handle-error status)))))
 
 (defun company-sourcekit--process-json (return-json)
