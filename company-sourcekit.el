@@ -54,8 +54,11 @@ IGNORED are ignored"
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-sourcekit))
-    (init (unless company-sourcekit-sourcekittendaemon-executable
-            (error "[company-sourcekit] sourcekittendaemon not found in PATH")))
+    (init (progn
+            (unless company-sourcekit-sourcekittendaemon-executable
+              (error "[company-sourcekit] sourcekittendaemon not found in PATH"))
+            (if (eq (company-sourcekit--project) 'unknown)
+              (error "[company-sourcekit] *.xcodeproj not found in directory tree"))))
     (sorted t)
     (prefix (company-sourcekit--prefix))
     (candidates (cons :async (lambda (cb) (company-sourcekit--candidates arg cb))))
