@@ -119,7 +119,7 @@ So if a daemon already exists for another project, it will be killed and overwri
            ,company-sourcekit-sourcekittendaemon-executable
            "start"
            "--port" ,(number-to-string (cdr (assoc 'port daemon)))
-           "--project" ,(cdr (assoc 'project daemon))
+           ,@(-when-let ((x (cdr (assoc 'project daemon)))) `("--project" ,x))
            ,@(-when-let ((x (cdr (assoc 'target daemon)))) `("--target" ,x))
            ,@(-when-let ((x (cdr (assoc 'configuration daemon)))) `("--configuration" ,x)))))
 
