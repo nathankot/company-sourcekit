@@ -90,10 +90,12 @@ It never actually gets sent to the completion engine."
       (message "[company-sourcekit] query got status: %s" status))
     (when (or (string-match "exit" status) (string-match "finished" status))
       (if (eq 0 (process-exit-status proc))
-        (let ((completions (company-sourcekit--process-json output)))
-          (when company-sourcekit-verbose
-            (message "[company-sourcekit] sending results to company"))
-          (funcall callback completions))
+        (condition-case nil
+          (let ((completions (company-sourcekit--process-json output)))
+            (when company-sourcekit-verbose
+              (message "[company-sourcekit] sending results to company"))
+            (funcall callback completions))
+          (error (funcall callback nil)))
         (company-sourcekit--handle-error status)))))
 
 (defun company-sourcekit--process-json (return-json)
