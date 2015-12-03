@@ -101,7 +101,8 @@ CB is called with the port as the first argument, nil if the daemon cannot be cr
               (unless (eq "run" status)
                 (message "[sourcekit] daemon startup failure: %s" status)
                 (setq sourcekit-start-daemon-lock nil)
-                (setq sourcekit-last-daemon-port nil))))
+                (setq sourcekit-last-daemon-port nil)
+                (funcall cb nil))))
 
           (set-process-filter process
             (lambda (proc str)
@@ -120,7 +121,8 @@ CB is called with the port as the first argument, nil if the daemon cannot be cr
                 (sourcekit-with-daemon-for-project project cb)))))
 
         (when sourcekit-verbose
-          (message "[sourcekit] skipping daemon startup due to existing lock"))))))
+          (message "[sourcekit] skipping daemon startup due to existing lock"))
+        (funcall cb nil)))))
 
 (defun sourcekit-lax-query-sync (port path &rest args)
   "Run a query against the sourcekit daemon on PORT and PATH synchronously.
