@@ -16,8 +16,8 @@
   :group 'company-sourcekit)
 
 (defcustom sourcekit-available-ports
-  '(8081 8082 8083 8084 8085 8086 8087)
-  "The list of ports that sourcekittendaemon is permitted to listen on"
+  '(8081 8082 8083 8084 8085 8086 8087 8088 8089 8090)
+  "The list of ports that sourcekittendaemon is permitted to listen on."
   :type 'integer
   :group 'sourcekit)
 
