@@ -72,9 +72,7 @@ It never actually gets sent to the completion engine."
       (if (not port) (callback nil)
         (let* (
                 (tmpfile (make-temp-file "sourcekitten"))
-                ;; SourceKit uses an offset starting @ 0, whereas emacs' starts at 1,
-                ;; therefore subtract `point-min`
-                (offset (- (point) (length prefix) (point-min))))
+                (offset (- (point) (length prefix))))
           (write-region (point-min) (point-max) tmpfile)
           (when company-sourcekit-verbose
             (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
@@ -106,7 +104,7 @@ It never actually gets sent to the completion engine."
                    (desc (cdr (assoc 'descriptionKey l)))
                    (src (cdr (assoc 'sourcetext l)))
                    (type (cdr (assoc 'typeName l))))
-               (propertize name
+               (propertize (company-sourcekit--normalize-source-text src)
                            'sourcetext src
                            'description desc
                            'type type)))
@@ -123,7 +121,18 @@ It never actually gets sent to the completion engine."
     (when company-sourcekit-verbose (message "[company-sourcekit] expanding yasnippet template"))
     (let ((template (company-sourcekit--build-yasnippet (get-text-property 0 'sourcetext completed))))
       (when company-sourcekit-verbose (message "[company-sourcekit] %s" template))
-      (yas-expand-snippet template (- (point) (length completed) 1) (point)))))
+      (yas-expand-snippet template (- (point) (length completed)) (point)))))
+
+(defun company-sourcekit--normalize-source-text (sourcetext)
+  "Make a more readable completion candidate out of one with placeholders."
+  (replace-regexp-in-string
+   "<#T##\\(.*?\\)#>"
+   (lambda (str)
+     ;; <#T##Int#> - No label, argument only
+     (save-match-data
+       (string-match "<#T##\\(.*?\\)#>" str)
+       (format "%s" (car (split-string (match-string 1 str) "#")))))
+   sourcetext))
 
 (defun company-sourcekit--build-yasnippet (sourcetext)
   "Build a yasnippet-compatible snippet from the given source text"
