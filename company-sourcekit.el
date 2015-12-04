@@ -54,8 +54,9 @@ It never actually gets sent to the completion engine."
     (eq major-mode 'swift-mode)
     (not (company-in-string-or-comment))
     (or
-      (company-grab-symbol-cons "\\.")
-      (company-grab-word))))
+      (-when-let* ((x (company-grab-symbol-cons "import ")) (_ (listp x))) x)
+      (-if-let (x (company-grab "\w*(\\(.*?\\)" 1 (line-beginning-position))) (cons x t))
+      (company-grab-symbol-cons "\\."))))
 
 (defun company-sourcekit--meta (candidate)
   "Gets the meta for the completion candidate."
