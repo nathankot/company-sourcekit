@@ -3,14 +3,14 @@
 
 ;;; Commentary:
 
+;;; Code:
+
 (require 'company)
 (require 'cl-lib)
 (require 'json)
 (require 'dash)
 (require 'dash-functional)
 (require 'sourcekit)
-
-;;; Code:
 
 (defgroup company-sourcekit nil
   "Completion backend that uses sourcekit"
