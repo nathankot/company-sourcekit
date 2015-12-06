@@ -1,8 +1,9 @@
-;;; -*- lexical-binding: t -*-
-;;; company-sourcekit --- company-mode completion back-end for sourcekit
-;;; Package-Requires: ((dash "2.12.1") (dash-functional "1.2.0")
+;;; company-sourcekit.el --- company-mode completion back-end for sourcekit -*- lexical-binding: t -*-
+;; Package-Requires: ((company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0"))
 
 ;;; Commentary:
+
+;;; Code:
 
 (require 'company)
 (require 'cl-lib)
@@ -10,8 +11,6 @@
 (require 'dash)
 (require 'dash-functional)
 (require 'sourcekit)
-
-;;; Code:
 
 (defgroup company-sourcekit nil
   "Completion backend that uses sourcekit"
@@ -28,6 +27,7 @@
   :type 'boolean
   :group 'company-sourcekit)
 
+;;;###autoload
 (defun company-sourcekit (command &optional arg &rest ignored)
   "Company backend for swift using sourcekitten."
   (interactive (list 'interactive))
@@ -70,7 +70,7 @@ It never actually gets sent to the completion engine."
   "Use sourcekitten to get a list of completion candidates."
   (sourcekit-with-daemon-for-project (sourcekit-project)
     (lambda (port)
-      (if (not port) (callback nil)
+      (if (not port) (funcall callback nil)
         (let* (
                 (tmpfile (make-temp-file "sourcekitten"))
                 (offset (- (point) (length prefix))))
