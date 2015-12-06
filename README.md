@@ -46,6 +46,6 @@ _MELPA release is coming soon._
 [sourcekittendaemon]: https://github.com/terhechte/SourceKittenDaemon
 [sourcekitten]: https://github.com/jpsim/SourceKitten
 
-#### Licenese
+#### License
 
-See [`LICENSE`](https://github.com/nathankot/company-sourcekit/blob/master/LICENSE)
+See [`LICENSE`](https://github.com/nathankot/company-sourcekit/blob/master/LICENSE).
