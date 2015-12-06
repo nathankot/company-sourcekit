@@ -39,9 +39,13 @@ _MELPA release is coming soon._
 
 #### Credits
 
-* Big thanks to [terhechte][terhechte] for spearheading SourceKittenDaemon
+* Big thanks to [terhechte][terhechte] for spearheading SourceKittenDaemon!
 
 [terhechte]: https://github.com/terhechte
 [company]: https://github.com/company-mode/company-mode
 [sourcekittendaemon]: https://github.com/terhechte/SourceKittenDaemon
 [sourcekitten]: https://github.com/jpsim/SourceKitten
+
+#### Licenese
+
+See [`LICENSE`](https://github.com/nathankot/company-sourcekit/blob/master/LICENSE)
