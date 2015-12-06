@@ -4,13 +4,13 @@ _[company-mode][company] completion for Swift projects via SourceKit with the he
 
 <img src="https://raw.githubusercontent.com/nathankot/company-sourcekit/master/screen.gif" width="384" height="281" />
 
-### Limitations
+#### Limitations
 
 * Only works when there is a `*.xcodeproj` up the directory tree.
 * OSX-only, since this communicates with SourceKit which only runs on OSX (AFAIK)
 * You need to have `curl` on your machine
 
-### Installation
+#### Installation
 
 First install [SourceKittenDaemon][sourcekittendaemon]. Once you have it
 installed on your `PATH` and emac's `exec-path` install company-sourcekit by
@@ -22,7 +22,7 @@ adding it to your `load-path` and then:
 
 _MELPA release is coming soon._
 
-### Configuration
+#### Configuration
 
 * __`company-sourcekit-use-yasnippet`__ - Use yasnippet for completion expansion. By default this is enabled if yasnippet is detected.
 * __`company-sourcekit-verbose`__ - Log company-related messages to `*messages*` with verbosity
@@ -31,13 +31,13 @@ _MELPA release is coming soon._
 * __`sourcekit-curl-executable`__ - Location of the `curl` executable
 * __`sourcekit-verbose`__ - Log sourcekittendaemon-related messages to `*messages*` with verbosity
 
-### How it works
+#### How it works
 
 * company-sourcekit communicates with sourcekittendaemon via HTTP.
 * Which in turn communicates with SourceKit using the [sourcekitten][sourcekitten] framework.
 * sourcekittendaemon will read your `.xcodeproj` file and determine the best configuration options to pass to sourcekit.
 
-### Credits
+#### Credits
 
 * Big thanks to [terhechte][terhechte] for spearheading SourceKittenDaemon
 
