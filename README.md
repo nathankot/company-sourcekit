@@ -26,7 +26,7 @@ _MELPA release is coming soon._
 
 * _`company-sourcekit-use-yasnippet`_ - Use yasnippet for completion expansion. By default this is enabled if yasnippet is detected.
 * _`company-sourcekit-verbose`_ - Log company-related messages to `*messages*` with verbosity
-* _`sourcekit-available-ports`_ - A list of ports that `sourcekittendaemon`` is allowed to listen on.
+* _`sourcekit-available-ports`_ - A list of ports that `sourcekittendaemon` is allowed to listen on.
 * _`sourcekit-sourcekittendaemon-executable`_ - Location of the `sourcekittendaemon` executable
 * _`sourcekit-curl-executable`_ - Location of the `curl` executable
 * _`sourcekit-verbose`_ - Log sourcekittendaemon-related messages to `*messages*` with verbosity
