@@ -1,6 +1,5 @@
-;;; -*- lexical-binding: t -*-
-;;; company-sourcekit --- company-mode completion back-end for sourcekit
-;;; Package-Requires: ((dash "2.12.1") (dash-functional "1.2.0")
+;;; company-sourcekit.el --- company-mode completion back-end for sourcekit -*- lexical-binding: t -*-
+;; Package-Requires: ((company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0"))
 
 ;;; Commentary:
 
