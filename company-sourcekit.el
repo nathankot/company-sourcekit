@@ -70,7 +70,7 @@ It never actually gets sent to the completion engine."
   "Use sourcekitten to get a list of completion candidates."
   (sourcekit-with-daemon-for-project (sourcekit-project)
     (lambda (port)
-      (if (not port) (callback nil)
+      (if (not port) (funcall callback nil)
         (let* (
                 (tmpfile (make-temp-file "sourcekitten"))
                 (offset (- (point) (length prefix))))
