@@ -27,6 +27,7 @@
   :type 'boolean
   :group 'company-sourcekit)
 
+;;;###autoload
 (defun company-sourcekit (command &optional arg &rest ignored)
   "Company backend for swift using sourcekitten."
   (interactive (list 'interactive))
