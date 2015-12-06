@@ -4,13 +4,13 @@ _[company-mode][company] completion for Swift projects via SourceKit with the he
 
 <img src="https://raw.githubusercontent.com/nathankot/company-sourcekit/master/cap.gif" width="384" height="281" />
 
-#### Limitations
+## Limitations
 
 * Only works when there is a `*.xcodeproj` up the directory tree.
 * OSX-only, since this communicates with SourceKit which only runs on OSX (AFAIK)
 * You need to have `curl` on your machine
 
-#### Installation
+## Installation
 
 First install [SourceKittenDaemon][sourcekittendaemon]. Once you have it
 installed on your `PATH` and emac's `exec-path` install company-sourcekit by
@@ -22,7 +22,7 @@ adding it to your `load-path` and then:
 
 _MELPA release is coming soon._
 
-#### Configuration
+## Configuration
 
 * _`company-sourcekit-use-yasnippet`_ - Use yasnippet for completion expansion. By default this is enabled if yasnippet is detected.
 * _`company-sourcekit-verbose`_ - Log company-related messages to `*messages*` with verbosity
@@ -31,13 +31,13 @@ _MELPA release is coming soon._
 * _`sourcekit-curl-executable`_ - Location of the `curl` executable
 * _`sourcekit-verbose`_ - Log sourcekittendaemon-related messages to `*messages*` with verbosity
 
-#### How it works
+## How it works
 
 * company-sourcekit communicates with sourcekittendaemon via HTTP.
 * Which in turn communicates with SourceKit using the [sourcekitten][sourcekitten] framework.
 * sourcekittendaemon will read your `.xcodeproj` file and determine the best configuration options to pass to sourcekit.
 
-#### Credits
+## Credits
 
 * Big thanks to [terhechte][terhechte] for spearheading SourceKittenDaemon!
 
@@ -46,6 +46,11 @@ _MELPA release is coming soon._
 [sourcekittendaemon]: https://github.com/terhechte/SourceKittenDaemon
 [sourcekitten]: https://github.com/jpsim/SourceKitten
 
-#### License
+## Contributing
+
+Is most welcome. Please use a feature branch and format your code with
+`indent-region` d(^.^)b
+
+## License
 
 See [`LICENSE`](https://github.com/nathankot/company-sourcekit/blob/master/LICENSE).
