@@ -4,12 +4,12 @@
 
 ;;; Commentary:
 
+;;; Code:
+
 (require 'company)
 (require 'cl-lib)
 (require 'dash)
 (require 'dash-functional)
-
-;;; Code:
 
 (defgroup sourcekit nil
   "Library to interface with sourcekitten daemon"
