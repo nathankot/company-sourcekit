@@ -2,7 +2,7 @@
 
 _[company-mode][company] completion for Swift projects via SourceKit with the help of [SourceKittenDaemon][sourcekittendaemon]._
 
-<img src="https://raw.githubusercontent.com/nathankot/company-sourcekit/master/screen.gif" width="384" height="281" />
+<img src="https://raw.githubusercontent.com/nathankot/company-sourcekit/master/cap.gif" width="384" height="281" />
 
 #### Limitations
 
