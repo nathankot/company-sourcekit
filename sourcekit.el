@@ -5,7 +5,6 @@
 
 ;;; Code:
 
-(require 'company)
 (require 'cl-lib)
 (require 'dash)
 (require 'dash-functional)
