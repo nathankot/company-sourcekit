@@ -13,7 +13,7 @@
 
 (defgroup sourcekit nil
   "Library to interface with sourcekitten daemon"
-  :group 'company-sourcekit)
+  :group 'sourcekit)
 
 (defcustom sourcekit-available-ports
   '(8081 8082 8083 8084 8085 8086 8087 8088 8089 8090)
