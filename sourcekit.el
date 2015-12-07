@@ -1,6 +1,5 @@
-;;; -*- lexical-binding: t -*-
-;;; sourcekit --- library to interact with sourcekitdaemon
-;;; Package-Requires: ((dash "2.12.1") (dash-functional "1.2.0")
+;;; sourcekit.el --- library to interact with sourcekitdaemon -*- lexical-binding: t -*-
+;; Package-Requires: ((emacs "24.3") (dash "2.12.1") (dash-functional "1.2.0"))
 
 ;;; Commentary:
 
