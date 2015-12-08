@@ -18,6 +18,7 @@ adding it to your `load-path` and then:
 
 ```elisp
 (require 'company-sourcekit)
+(add-to-list 'company-backends 'company-sourcekit)
 ```
 
 _MELPA release is coming soon._
