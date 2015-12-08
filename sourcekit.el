@@ -39,6 +39,12 @@
 (defvar sourcekit-start-daemon-lock nil
   "Ensures that there is at most one daemon start attempt.")
 
+(defun sourcekit-stop ()
+  "Stop any known sourcekit processes and queries for this buffer."
+  (interactive)
+  (-when-let (p (get-process "sourcekit-query")) (delete-process p))
+  (-when-let (p (get-process (format "sourcekit-daemon:%s" (sourcekit-project)))) (delete-process p)))
+
 (defvar-local sourcekit-project 'unknown)
 (defun sourcekit-project ()
   (when (eq sourcekit-project 'unknown)
