@@ -1,7 +1,32 @@
-;;; sourcekit.el --- library to interact with sourcekitdaemon -*- lexical-binding: t -*-
+;;; sourcekit.el --- Library to interact with sourcekittendaemon  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2015  Nathan Kot
+
+;; Author: Nathan Kot <nk@nathankot.com>
+;; URL: https://github.com/nathankot/company-sourcekit
+;; Keywords: tools, processes
+;; Version: 0.1.3
 ;; Package-Requires: ((emacs "24.3") (dash "2.12.1") (dash-functional "1.2.0"))
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ;;; Commentary:
+
+;; sourcekit.el is a library that interacts with sourcekittendaemon in order
+;; to communicate with SourceKit. Given a Xcode project in the directory tree,
+;; It provides functions to spin up/down daemons, discover existing daemons,
+;; and send queries to them either synchronous or asynchronously.
 
 ;;; Code:
 

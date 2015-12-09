@@ -53,7 +53,3 @@ _MELPA release is coming soon._
 
 Is most welcome. Please use a feature branch and format your code with
 `indent-region` d(^.^)b
-
-## License
-
-See [`LICENSE`](https://github.com/nathankot/company-sourcekit/blob/master/LICENSE).

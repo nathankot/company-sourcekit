@@ -1,7 +1,30 @@
-;;; company-sourcekit.el --- company-mode completion back-end for sourcekit -*- lexical-binding: t -*-
-;; Package-Requires: ((company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0"))
+;;; company-sourcekit.el --- company-mode completion backend for SourceKit  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2015  Nathan Kot
+
+;; Author: Nathan Kot <nk@nathankot.com>
+;; URL: https://github.com/nathankot/company-sourcekit
+;; Keywords: abbrev
+;; Version: 0.1.3
+;; Package-Requires: ((emacs "24.3") (company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0") (sourcekit "0.1.3"))
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
+;; A company-mode backend for swift projects. It communicates with SourceKit
+;; via sourcekittendaemon in order to obtain completions for Xcode projects.
 
 ;;; Code:
 
