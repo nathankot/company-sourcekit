@@ -1,5 +1,7 @@
 # company-sourcekit
 
+[![Melpa Status](http://melpa.milkbox.net/packages/company-sourcekit-badge.svg)](http://melpa.milkbox.net/#/company)
+
 _[company-mode][company] completion for Swift projects via SourceKit with the help of [SourceKittenDaemon][sourcekittendaemon]._
 
 <img src="https://raw.githubusercontent.com/nathankot/company-sourcekit/master/cap.gif" width="384" height="281" />
@@ -12,16 +14,25 @@ _[company-mode][company] completion for Swift projects via SourceKit with the he
 
 ## Installation
 
-First install [SourceKittenDaemon][sourcekittendaemon]. Once you have it
-installed on your `PATH` and emac's `exec-path` install company-sourcekit by
-adding it to your `load-path` and then:
+First install [SourceKittenDaemon][sourcekittendaemon]. Make sure that it's in
+the `exec-path` of your Emacs.
+
+And then you can install `compay-sourcekit` in the following ways:
+
+### MELPA
+
+```sh
+package-install <RET> company-sourcekit <RET>
+```
+
+### Source
+
+Make sure this repository is in your `load-path`, and then:
 
 ```elisp
 (require 'company-sourcekit)
 (add-to-list 'company-backends 'company-sourcekit)
 ```
-
-_MELPA release is coming soon._
 
 ## Configuration
 
