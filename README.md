@@ -22,7 +22,7 @@ And then you can install `compay-sourcekit` in the following ways:
 ### MELPA
 
 ```sh
-package-install <RET> company-sourcekit <RET>
+M-x package-install <RET> company-sourcekit <RET>
 ```
 
 ### Source
