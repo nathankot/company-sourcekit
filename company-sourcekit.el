@@ -101,7 +101,7 @@ It never actually gets sent to the completion engine."
     (lambda (port)
       (if (not port) (funcall callback nil)
         (let* ((tmpfile (company-sourcekit--tmp-file))
-                (offset (- (point) (length prefix))))
+                (offset (- (point) (length prefix) (point-min))))
           (write-region (point-min) (point-max) tmpfile)
           (when company-sourcekit-verbose
             (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
