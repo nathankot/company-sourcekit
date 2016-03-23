@@ -70,6 +70,12 @@
 
 ;;; Private:
 
+(defvar-local company-sourcekit--tmp-file 'unknown)
+(defun company-sourcekit--tmp-file ()
+  (when (eq company-sourcekit--tmp-file 'unknown)
+    (setq company-sourcekit--tmp-file (make-temp-file "sourcekitten")))
+  company-sourcekit--tmp-file)
+
 (defun company-sourcekit--prefix ()
   "In our case, the prefix acts as a cache key for company-mode.
 It never actually gets sent to the completion engine."
@@ -94,8 +100,7 @@ It never actually gets sent to the completion engine."
   (sourcekit-with-daemon-for-project (sourcekit-project)
     (lambda (port)
       (if (not port) (funcall callback nil)
-        (let* (
-                (tmpfile (make-temp-file "sourcekitten"))
+        (let* ((tmpfile (company-sourcekit--tmp-file))
                 (offset (- (point) (length prefix))))
           (write-region (point-min) (point-max) tmpfile)
           (when company-sourcekit-verbose
