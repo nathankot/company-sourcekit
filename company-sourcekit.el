@@ -83,9 +83,52 @@ It never actually gets sent to the completion engine."
     (eq major-mode 'swift-mode)
     (not (company-in-string-or-comment))
     (or
+      ;; Fetch prefix during import statements:
+      ;;
+      ;; Given: "import |"
+      ;; Prefix: ""
+      ;; Offset: 7
+      ;;
+      ;; Given: "import Found|"
+      ;; Prefix: "Found"
+      ;; Offset: 7
       (-when-let* ((x (company-grab-symbol-cons "import ")) (_ (listp x))) x)
-      (-if-let (x (company-grab "\w*(\\(.*?\\)" 1 (line-beginning-position))) (cons x t))
-      (company-grab-symbol-cons "\\."))))
+
+      ;; Fetch prefix for method calls:
+      ;;
+      ;; Given: "self.|"
+      ;; Prefix: ""
+      ;; Offset: 5
+      ;;
+      ;; Given: "self.hel|"
+      ;; Prefix: "hel"
+      ;; Offset: 5
+      (let ((r (company-grab-symbol-cons "\\.")))
+        (when (consp r) r))
+
+      ;; Fetch prefix for function calls:
+      ;;
+      ;; Given: "CGRect(|)"
+      ;; Prefix: ""
+      ;; Offset: 7
+      ;;
+      ;; Given: "CGRect(x:|)"
+      ;; Prefix: "x:"
+      ;; Offset: 7
+      (-if-let (x (company-grab "\_*(\\([\w\_:]*?\\)" 1 (line-beginning-position)))
+        (cons x t))
+
+      ;; Fetch prefix for symbols:
+      ;;
+      ;; Given: "let r = CGRe|"
+      ;; Prefix: ""
+      ;; Offset: 12
+      ;;
+      ;; Given: "let r = CGRec|"
+      ;; Prefix: ""
+      ;; Offset: 13
+      (-if-let (x (company-grab-symbol))
+        (when (> (length x) 0) (cons "" t))))))
 
 (defun company-sourcekit--meta (candidate)
   "Gets the meta for the completion candidate."
