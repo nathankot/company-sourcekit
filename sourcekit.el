@@ -207,6 +207,7 @@ This function will clean the buffer before returning it."
     (get-buffer-create "*sourcekit-output*")
     (with-current-buffer (get-buffer "*sourcekit-output*")
       (erase-buffer)
+      (linum-mode -1)
       (buffer-disable-undo)
       (current-buffer))))
 
