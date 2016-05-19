@@ -17,7 +17,7 @@ _[company-mode][company] completion for Swift projects via SourceKit with the he
 First install [SourceKittenDaemon][sourcekittendaemon]. Make sure that it's in
 the `exec-path` of your Emacs.
 
-And then you can install `compay-sourcekit` in the following ways:
+And then you can install `company-sourcekit` in the following ways:
 
 ### MELPA
 
