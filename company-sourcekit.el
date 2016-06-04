@@ -145,7 +145,7 @@ It never actually gets sent to the completion engine."
       (if (not port) (funcall callback nil)
         (let* ((tmpfile (company-sourcekit--tmp-file))
                 (offset (- (position-bytes (point)) (length prefix) (point-min))))
-          (write-region (point-min) (point-max) tmpfile)
+          (write-region (point-min) (point-max) tmpfile 'silent)
           (when company-sourcekit-verbose
             (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
           ;; Make HTTP request to the sourcekittendaemon, asynchronously
