@@ -36,6 +36,17 @@ Make sure this repository is in your `load-path`, and then:
 
 ## Configuration
 
+### Automatically turn on completions
+
+Completions will not be loaded automatically in `Swift` mode. To enable them, add the following to your emacs init file *(use `SPC-f-e-i` to open it in spacemacs)*:
+```elisp
+  (add-hook 'swift-mode-hook (lambda ()
+                              (set (make-local-variable 'company-backends) '(company-sourcekit))
+                              (company-mode)))
+```
+
+### Options
+
 * _`company-sourcekit-use-yasnippet`_ - Use yasnippet for completion expansion. By default this is enabled if yasnippet is detected.
 * _`company-sourcekit-verbose`_ - Log company-related messages to `*messages*` with verbosity
 * _`sourcekit-available-ports`_ - A list of ports that `sourcekittendaemon` is allowed to listen on.
