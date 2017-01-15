@@ -209,6 +209,10 @@ This function will clean the buffer before returning it."
       (erase-buffer)
       (linum-mode -1)
       (buffer-disable-undo)
+      (font-lock-mode 0)
+      (setq-local coding-system-for-write 'binary)
+      (setq-local buffer-file-coding-system 'binary)
+      (set-buffer-multibyte nil)
       (current-buffer))))
 
 (provide 'sourcekit)
