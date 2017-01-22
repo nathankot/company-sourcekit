@@ -6,7 +6,7 @@
 ;; URL: https://github.com/nathankot/company-sourcekit
 ;; Keywords: abbrev
 ;; Version: 0.1.7
-;; Package-Requires: ((emacs "24.3") (company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0") (sourcekit "0.1.7"))
+;; Package-Requires: ((emacs "24.3") (company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0") (sourcekit "0.1.7") (deferred "0.3.2") (request-deferred "0.2.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@
 (require 'dash)
 (require 'dash-functional)
 (require 'sourcekit)
+(require 'deferred)
+(require 'request-deferred)
 
 (defgroup company-sourcekit nil
   "Completion backend that uses sourcekit"
@@ -148,27 +150,31 @@ It never actually gets sent to the completion engine."
           (write-region (point-min) (point-max) tmpfile nil 'silent)
           (when company-sourcekit-verbose
             (message "[company-sourcekit] prefix: `%s`, file: %s, offset: %d" prefix tmpfile offset))
-          ;; Make HTTP request to the sourcekittendaemon, asynchronously
-          (sourcekit-query port
-            "/complete"
-            (company-sourcekit--make-sentinel callback)
-            "-H" (format "X-Offset: %d" offset)
-            "-H" (format "X-Path: %s" tmpfile)))))))
+          (deferred:$
+            (deferred:try
+              (deferred:$
+                (company-sourcekit--query-deferred port "/complete" offset tmpfile))
+              :catch (lambda (_err) nil))
+            (deferred:nextc it
+              (lambda (data)
+                (let ((completions (company-sourcekit--process-json data)))
+                  (funcall callback completions))))))))))
 
-(defun company-sourcekit--make-sentinel (callback)
-  "The handler for process output."
-  (lambda (proc status output)
-    (when company-sourcekit-verbose
-      (message "[company-sourcekit] query got status: %s" status))
-    (when (or (string-match "exit" status) (string-match "finished" status))
-      (if (eq 0 (process-exit-status proc))
-        (condition-case nil
-          (let ((completions (company-sourcekit--process-json output)))
-            (when company-sourcekit-verbose
-              (message "[company-sourcekit] sending results to company"))
-            (funcall callback completions))
-          (error (funcall callback nil)))
-        (company-sourcekit--handle-error status)))))
+(defun company-sourcekit--query-deferred (port path offset tmpfile)
+  "Get query results from sourcekittendaemon asynchronously."
+  (let* ((url (format "http://localhost:%d%s" port path))
+         (args `(("X-Offset" . ,offset)
+                 ("X-Path" . ,tmpfile)))
+         (parser (lambda ()
+                   (let ((json-array-type 'list))
+                     (json-read))))
+         (request-args (list :parser parser :headers args))
+         (response-fn (lambda (response)
+                        (let ((data (request-response-data response)))
+                          data))))
+    (deferred:$
+      (apply #'request-deferred url request-args)
+      (deferred:nextc it response-fn))))
 
 (defun company-sourcekit--process-json (return-json)
   "Given json returned from sourcekitten, turn it into a list compatible with company-mode"
@@ -182,7 +188,7 @@ It never actually gets sent to the completion engine."
                            'sourcetext src
                            'description desc
                            'type type)))
-           (json-read-from-string return-json)) nil))
+           return-json) nil))
 
 (defun company-sourcekit--handle-error (status)
   (when company-sourcekit-verbose
