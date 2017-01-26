@@ -45,7 +45,7 @@
   :type 'boolean
   :group 'company-sourcekit)
 
-(defcustom company-sourcekit-verbose t
+(defcustom company-sourcekit-verbose nil
   "Should log with verbosity to the messages buffer."
   :type 'boolean
   :group 'company-sourcekit)
