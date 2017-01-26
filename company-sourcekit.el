@@ -156,7 +156,9 @@ It never actually gets sent to the completion engine."
 (defun company-sourcekit--make-callback (callback)
   "The handler for process output."
   (lambda (json)
-    (let ((completions (company-sourcekit--process-json json)))
+    (let ((completions (-filter
+                         (lambda (candidate) (eq 0 (string-match-p company-prefix candidate)))
+                         (company-sourcekit--process-json json))))
       (when company-sourcekit-verbose
         (message "[company-sourcekit] sending results to company"))
       (funcall callback completions))))
