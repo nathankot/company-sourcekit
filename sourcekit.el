@@ -136,17 +136,14 @@ CB is called with the port as the first argument, nil if the daemon cannot be cr
 
           (set-process-filter process
             (lambda (proc str)
-              (-when-let (found-port (save-match-data
-                                       (and
-                                         (string-match "Listening on port: *\\([0-9][0-9]*\\)" str)
-                                         (match-string 1 str))))
+              (when sourcekit-verbose (message "[sourcekit] process message: %s" str))
+              (-when-let (found-port (save-match-data (and (string-match "0.0.0.0:\\([0-9][0-9]*\\)" str) (match-string 1 str))))
                 (when sourcekit-verbose
                   (message "[sourcekit] daemon listening on port %d" (string-to-number found-port)))
                 (set-process-sentinel process nil)
                 (set-process-filter process nil)
                 (setq sourcekit-last-daemon-port (string-to-number found-port))
                 (setq sourcekit-start-daemon-lock nil)
-
                 ;; Now that we have a new daemon, re-run this function again
                 (sourcekit-with-daemon-for-project project cb)))))
 
