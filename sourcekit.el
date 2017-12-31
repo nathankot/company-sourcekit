@@ -167,7 +167,8 @@ CB will be given the response JSON on a successful request. If a query ever fail
       :headers headers
       :success (cl-function
                  (lambda (&key data &allow-other-keys)
-                   (message "[sourcekit] got query response")
+                   (when sourcekit-verbose
+                     (message "[sourcekit] got query response"))
                    (funcall cb data)))
       :error (cl-function
                ;; When exiting with an error, try get a new daemon
