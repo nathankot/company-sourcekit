@@ -6,7 +6,7 @@
 ;; URL: https://github.com/nathankot/company-sourcekit
 ;; Keywords: abbrev
 ;; Version: 0.2.0
-;; Package-Requires: ((emacs "24.3") (company "0.8.12") (dash "2.12.1") (dash-functional "1.2.0") (sourcekit "0.2.0"))
+;; Package-Requires: ((emacs "24.3") (company "0.8.12") (dash "2.18.0") (sourcekit "0.2.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 (require 'cl-lib)
 (require 'json)
 (require 'dash)
-(require 'dash-functional)
 (require 'sourcekit)
 
 (defgroup company-sourcekit nil
